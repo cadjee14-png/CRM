@@ -10,7 +10,14 @@ function revalidateAll() {
   revalidatePath('/stats')
 }
 
-export async function updateStatutAlerte(id: string, statut: 'pending' | 'fait') {
+export async function updateStatutAlerte(
+  id: string,
+  statut: 'pending' | 'fait',
+  montant?: number,
+  clientId?: string,
+  vehiculeId?: string,
+  dateEcheance?: string,
+) {
   const supabase = await createClient()
 
   if (statut === 'fait') {
@@ -20,15 +27,27 @@ export async function updateStatutAlerte(id: string, statut: 'pending' | 'fait')
       .eq('id', id)
       .single()
 
-    if (alerte?.date_echeance) {
-      const next = new Date(alerte.date_echeance)
+    const a = alerte ?? { client_id: clientId, vehicule_id: vehiculeId, type: 'revision', date_echeance: dateEcheance }
+
+    if (a.date_echeance) {
+      const next = new Date(a.date_echeance)
       next.setFullYear(next.getFullYear() + 1)
       await supabase.from('alertes').insert({
-        client_id: alerte.client_id,
-        vehicule_id: alerte.vehicule_id,
-        type: alerte.type,
+        client_id: a.client_id,
+        vehicule_id: a.vehicule_id,
+        type: a.type,
         date_echeance: next.toISOString().split('T')[0],
         statut: 'pending',
+      })
+    }
+
+    if (a.client_id) {
+      await supabase.from('revisions').insert({
+        client_id: a.client_id,
+        vehicule_id: a.vehicule_id ?? null,
+        alerte_id: id,
+        montant: montant ?? null,
+        date_revision: a.date_echeance ?? new Date().toISOString().split('T')[0],
       })
     }
   }

@@ -17,21 +17,21 @@ const SNOOZE_OPTIONS = [
 ]
 
 export default function AlerteActions({
-  id, statut, relance_statut, date_echeance,
+  id, statut, relance_statut, date_echeance, clientId, vehiculeId,
 }: {
   id: string
   statut: string
   relance_statut?: string | null
   date_echeance?: string
+  clientId?: string
+  vehiculeId?: string | null
 }) {
   const [pending, startTransition] = useTransition()
   const [editingDate, setEditingDate] = useState(false)
   const [showSnooze, setShowSnooze] = useState(false)
+  const [showFaitForm, setShowFaitForm] = useState(false)
+  const [montant, setMontant] = useState('')
   const [dateValue, setDateValue] = useState(date_echeance ?? '')
-
-  function handleStatut(newStatut: 'pending' | 'fait') {
-    startTransition(() => updateStatutAlerte(id, newStatut))
-  }
 
   function handleRelance(value: string) {
     startTransition(() => updateRelanceStatut(id, value || null))
@@ -42,12 +42,56 @@ export default function AlerteActions({
     startTransition(() => snoozeAlerte(id, days))
   }
 
+  function handleFaitConfirm() {
+    const m = montant ? parseFloat(montant) : null
+    setShowFaitForm(false)
+    setMontant('')
+    startTransition(() => updateStatutAlerte(id, 'fait', m ?? undefined, clientId, vehiculeId ?? undefined, date_echeance))
+  }
+
   function handleDateSave() {
     if (!dateValue) return
     startTransition(async () => {
       await updateEcheanceAlerte(id, dateValue)
       setEditingDate(false)
     })
+  }
+
+  if (showFaitForm) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 12, color: '#4a5568', whiteSpace: 'nowrap' }}>Montant TTC :</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0 €"
+            value={montant}
+            onChange={(e) => setMontant(e.target.value)}
+            autoFocus
+            style={{
+              width: 80, padding: '5px 8px', border: '1px solid #e3eaf3',
+              borderRadius: 6, fontSize: 13, fontFamily: 'inherit', color: '#0c0c14',
+            }}
+          />
+        </div>
+        <button onClick={handleFaitConfirm} disabled={pending} style={{
+          padding: '6px 12px', fontSize: 12, fontWeight: 600,
+          background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a',
+          borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit',
+        }}>
+          Confirmer
+        </button>
+        <button onClick={() => { setShowFaitForm(false); setMontant('') }} style={{
+          padding: '6px 8px', fontSize: 12,
+          background: 'none', border: '1px solid #e3eaf3', color: '#8a8a9a',
+          borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit',
+        }}>
+          ✕
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -90,7 +134,7 @@ export default function AlerteActions({
 
         {/* Fait */}
         {statut !== 'fait' && (
-          <button onClick={() => handleStatut('fait')} disabled={pending} style={{
+          <button onClick={() => setShowFaitForm(true)} disabled={pending} style={{
             padding: '6px 12px', fontSize: 12, fontWeight: 600,
             background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a',
             borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit',
@@ -139,7 +183,7 @@ export default function AlerteActions({
         )}
 
         {statut !== 'pending' && (
-          <button onClick={() => handleStatut('pending')} disabled={pending} style={{
+          <button onClick={() => startTransition(() => updateStatutAlerte(id, 'pending'))} disabled={pending} style={{
             padding: '6px 12px', fontSize: 12, fontWeight: 500,
             background: '#f9fafb', border: '1px solid #e3eaf3', color: '#4a4a58',
             borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit',
