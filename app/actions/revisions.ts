@@ -1,10 +1,10 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export async function createRevisionAction(clientId: string, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const vehiculeId = formData.get('vehicule_id') as string || null
 
@@ -22,7 +22,7 @@ export async function createRevisionAction(clientId: string, formData: FormData)
 }
 
 export async function deleteRevisionAction(revisionId: string, clientId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('revisions').delete().eq('id', revisionId)
   if (error) throw new Error(error.message)
   revalidatePath(`/clients/${clientId}`)

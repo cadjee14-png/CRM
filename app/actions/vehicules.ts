@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 function calcEcheance(typeRelation: string, dateAchat?: string, dateRevision?: string): string {
@@ -18,7 +18,7 @@ function calcEcheance(typeRelation: string, dateAchat?: string, dateRevision?: s
 }
 
 export async function createVehiculeAction(clientId: string, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const typeRelation = formData.get('type_relation') as string
   const dateAchat = formData.get('date_achat') as string || null
@@ -60,7 +60,7 @@ export async function createVehiculeAction(clientId: string, formData: FormData)
 }
 
 export async function deleteVehiculeAction(vehiculeId: string, clientId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('vehicules').delete().eq('id', vehiculeId)
   if (error) throw new Error(error.message)
 

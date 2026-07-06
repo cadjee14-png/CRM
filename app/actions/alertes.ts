@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 function revalidateAll() {
@@ -18,7 +18,7 @@ export async function updateStatutAlerte(
   vehiculeId?: string,
   dateEcheance?: string,
 ) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   if (statut === 'fait') {
     const { data: alerte } = await supabase
@@ -58,7 +58,7 @@ export async function updateStatutAlerte(
 }
 
 export async function snoozeAlerte(id: string, days: number) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const newDate = new Date()
   newDate.setDate(newDate.getDate() + days)
   const { error } = await supabase
@@ -70,7 +70,7 @@ export async function snoozeAlerte(id: string, days: number) {
 }
 
 export async function archiveOldAlertes(beforeYear: number) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const cutoff = `${beforeYear}-01-01`
   const { error } = await supabase
     .from('alertes')
@@ -82,28 +82,28 @@ export async function archiveOldAlertes(beforeYear: number) {
 }
 
 export async function updateNoteAlerte(id: string, note: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('alertes').update({ note }).eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/alertes')
 }
 
 export async function updateRelanceStatut(id: string, relance_statut: string | null) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('alertes').update({ relance_statut }).eq('id', id)
   if (error) throw new Error(error.message)
   revalidateAll()
 }
 
 export async function updateEcheanceAlerte(id: string, date_echeance: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('alertes').update({ date_echeance }).eq('id', id)
   if (error) throw new Error(error.message)
   revalidateAll()
 }
 
 export async function createAlerteManuelle(clientId: string, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('alertes').insert({
     client_id: clientId,
     vehicule_id: (formData.get('vehicule_id') as string) || null,

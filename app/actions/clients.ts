@@ -1,11 +1,11 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 export async function createClientAction(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const data = {
     civilite: formData.get('civilite') as string || null,
@@ -28,7 +28,7 @@ export async function createClientAction(formData: FormData) {
 }
 
 export async function updateClientAction(id: string, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const data = {
     civilite: formData.get('civilite') as string || null,
@@ -48,7 +48,7 @@ export async function updateClientAction(id: string, formData: FormData) {
 }
 
 export async function deleteClientAction(id: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('clients').delete().eq('id', id)
   if (error) throw new Error(error.message)
 

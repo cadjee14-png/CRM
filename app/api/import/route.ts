@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 60
@@ -33,7 +33,7 @@ function parseCSV(text: string): Record<string, string>[] {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const formData = await request.formData()
   const file = formData.get('file') as File | null
 
