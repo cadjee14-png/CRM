@@ -33,12 +33,14 @@ function SortTh({ label, col, activeSort, activeOrder, buildHref }: {
 export default function ClientsTable({
   clients,
   allClientIds = [],
+  montantMap = {},
   activeSort = 'nom',
   activeOrder = 'asc',
   urlParams = {},
 }: {
   clients: Client[]
   allClientIds?: string[]
+  montantMap?: Record<string, number | null>
   activeSort?: string
   activeOrder?: string
   urlParams?: Record<string, string>
@@ -142,7 +144,7 @@ export default function ClientsTable({
             <SortTh label="Client" col="nom" activeSort={activeSort} activeOrder={activeOrder} buildHref={sortHref} />
             <th style={{ padding: '11px 16px', fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'left' }}>Téléphone</th>
             <th style={{ padding: '11px 16px', fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'left' }}>Email</th>
-            <SortTh label="Véhicules" col="vehicules" activeSort={activeSort} activeOrder={activeOrder} buildHref={sortHref} />
+            <SortTh label="Dernier montant" col="montant" activeSort={activeSort} activeOrder={activeOrder} buildHref={sortHref} />
             <SortTh label="Alertes" col="alertes" activeSort={activeSort} activeOrder={activeOrder} buildHref={sortHref} />
             <th style={{ padding: '11px 16px' }} />
           </tr>
@@ -150,6 +152,7 @@ export default function ClientsTable({
         <tbody>
           {clients.map((c) => {
             const alertesPending = c.alertes?.filter((a) => a.statut === 'pending').length ?? 0
+            const montant = montantMap[c.id] ?? null
             const tags = c.tags ? c.tags.split(',').map((t) => t.trim()).filter(Boolean) : []
             const isSelected = selected.has(c.id)
             return (
@@ -180,9 +183,16 @@ export default function ClientsTable({
                   {c.email || <span style={{ color: '#c8d4e0' }}>—</span>}
                 </td>
                 <td style={{ padding: '13px 16px' }}>
-                  <span style={{ fontSize: 13, color: c.vehicules?.length ? '#4a5568' : '#c8d4e0' }}>
-                    {c.vehicules?.length ?? 0}
-                  </span>
+                  {montant != null ? (
+                    <span style={{
+                      fontSize: 13, fontWeight: 600,
+                      color: montant >= 200 && montant <= 700 ? '#0284c7' : montant > 700 ? '#d97706' : '#4a5568',
+                    }}>
+                      {montant.toFixed(0)} €
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 12, color: '#c8d4e0' }}>—</span>
+                  )}
                 </td>
                 <td style={{ padding: '13px 16px' }}>
                   {alertesPending > 0 ? (

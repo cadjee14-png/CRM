@@ -29,13 +29,33 @@ export default async function ClientsPage({
 
   let query = supabase
     .from('clients')
-    .select('*, vehicules(id), alertes(id, statut)')
+    .select('*, alertes(id, statut)')
 
   if (q) query = query.or(`nom.ilike.%${q}%,prenom.ilike.%${q}%,telephone.ilike.%${q}%,email.ilike.%${q}%`)
 
   const { data: allClients } = await query
 
   let clients = allClients ?? []
+
+  // Dernier montant par client
+  const montantMap = new Map<string, number | null>()
+  if (clients.length > 0) {
+    const ids = clients.map((c: any) => c.id)
+    const { data: revisions } = await supabase
+      .from('revisions')
+      .select('client_id, montant, date_revision')
+      .in('client_id', ids)
+      .order('date_revision', { ascending: false })
+
+    for (const id of ids) montantMap.set(id, null)
+    if (revisions) {
+      for (const r of revisions) {
+        if (montantMap.get(r.client_id) === null && r.montant != null) {
+          montantMap.set(r.client_id, Number(r.montant))
+        }
+      }
+    }
+  }
 
   clients = [...clients].sort((a: any, b: any) => {
     let va: any, vb: any
@@ -119,6 +139,7 @@ export default async function ClientsPage({
             <ClientsTable
               clients={pagedClients as any}
               allClientIds={clients.map((c: any) => c.id)}
+              montantMap={Object.fromEntries(montantMap)}
               activeSort={activeSort}
               activeOrder={activeOrder}
               urlParams={{ ...(q ? { q } : {}) }}
